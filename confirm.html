@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>تأكيد الموعد — عيادة د. ياسر يحيى</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0a2342;--blue-mid:#1976d2;--blue-light:#e3f0ff;
+  --red:#c62828;--green:#2e7d32;--green-l:#e8f5e9;
+  --white:#fff;--off:#f8fafc;--gray:#64748b;--gray-l:#e2e8f0;
+}
+body{
+  font-family:'Cairo',sans-serif;direction:rtl;
+  background:linear-gradient(135deg,var(--navy) 0%,#0d3060 60%,#1565c0 100%);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:20px;
+}
+
+.card{
+  background:#fff;border-radius:20px;
+  width:100%;max-width:480px;
+  box-shadow:0 32px 80px rgba(0,0,0,.35);
+  overflow:hidden;
+}
+
+/* HEADER */
+.card-header{
+  background:linear-gradient(135deg,var(--navy),#1565c0);
+  padding:28px 32px;text-align:center;
+}
+.header-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;}
+.logo-icon{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:18px;height:18px;}
+.header-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:#fff;}
+.header-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;}
+
+/* LOADING */
+#loading{padding:48px 32px;text-align:center;}
+.spinner{width:48px;height:48px;border:3px solid var(--gray-l);border-top-color:var(--blue-mid);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+#loading p{font-size:15px;color:var(--gray);}
+
+/* PATIENT INFO */
+#patient-info{display:none;padding:28px 32px;}
+.section-tag{
+  font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--red);font-weight:700;
+  display:flex;align-items:center;gap:8px;margin-bottom:16px;
+}
+.section-tag::before{content:'';display:block;width:24px;height:2px;background:var(--red);}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.info-item{background:var(--off);border-radius:10px;padding:12px 14px;}
+.info-label{font-size:11px;color:var(--gray);margin-bottom:3px;font-weight:600;}
+.info-value{font-size:14px;font-weight:700;color:var(--navy);}
+
+.complaint-box{
+  background:#fff8f8;border:1.5px solid #ffcdd2;
+  border-radius:10px;padding:16px;margin-bottom:24px;
+}
+.complaint-box .info-label{color:var(--red);margin-bottom:8px;font-size:12px;}
+.complaint-text{font-size:14px;line-height:1.8;color:#333;}
+
+/* CONFIRM BUTTON */
+.confirm-btn{
+  width:100%;padding:16px;
+  background:var(--green);color:#fff;border:none;border-radius:10px;
+  font-family:'Cairo',sans-serif;font-size:17px;font-weight:900;
+  cursor:pointer;transition:all .3s;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 6px 24px rgba(46,125,50,.3);
+  margin-bottom:10px;
+}
+.confirm-btn:hover{background:#1b5e20;transform:translateY(-2px);box-shadow:0 10px 32px rgba(46,125,50,.4);}
+.confirm-btn:disabled{background:#ccc;cursor:not-allowed;transform:none;box-shadow:none;}
+.confirm-btn svg{width:20px;height:20px;}
+
+.cancel-btn{
+  width:100%;padding:12px;
+  background:#ffebee;color:var(--red);border:none;border-radius:10px;
+  font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .3s;
+}
+.cancel-btn:hover{background:var(--red);color:#fff;}
+
+/* ALREADY DONE */
+#already-done{display:none;padding:48px 32px;text-align:center;}
+.status-icon{width:72px;height:72px;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;}
+.status-icon.green{background:var(--green-l);}
+.status-icon.red{background:#ffebee;}
+.status-icon svg{width:34px;height:34px;}
+#already-done h3{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+#already-done p{font-size:14px;color:var(--gray);line-height:1.7;}
+
+/* NOT FOUND */
+#not-found{display:none;padding:48px 32px;text-align:center;}
+#not-found h3{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+#not-found p{font-size:14px;color:var(--gray);}
+
+/* SUCCESS OVERLAY */
+#success-state{display:none;padding:48px 32px;text-align:center;}
+.big-check{width:88px;height:88px;background:var(--green-l);border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;animation:pop .5s ease;}
+@keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+.big-check svg{width:44px;height:44px;color:var(--green);}
+#success-state h2{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:10px;}
+#success-state p{font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:24px;}
+.whatsapp-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:#25D366;color:#fff;
+  border:none;border-radius:10px;
+  padding:14px 32px;
+  font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;transition:all .3s;
+  box-shadow:0 6px 20px rgba(37,211,102,.3);
+  text-decoration:none;
+}
+.whatsapp-btn:hover{background:#1ebe57;transform:translateY(-2px);}
+.whatsapp-btn svg{width:20px;height:20px;}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <div class="header-logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div class="header-title">Dr. Yasser Yehia</div>
+    </div>
+    <div class="header-sub">نظام تأكيد المواعيد</div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>جاري تحميل بيانات المريض...</p>
+  </div>
+
+  <!-- PATIENT INFO + CONFIRM -->
+  <div id="patient-info">
+    <div class="section-tag">بيانات المريض</div>
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">الاسم</div><div class="info-value" id="p-name">—</div></div>
+      <div class="info-item"><div class="info-label">الهاتف</div><div class="info-value" id="p-phone">—</div></div>
+      <div class="info-item"><div class="info-label">التاريخ</div><div class="info-value" id="p-date">—</div></div>
+      <div class="info-item"><div class="info-label">الوقت</div><div class="info-value" id="p-time">—</div></div>
+    </div>
+    <div class="complaint-box">
+      <div class="info-label">🩺 الشكوى الطبية</div>
+      <div class="complaint-text" id="p-complaint">—</div>
+    </div>
+    <button class="confirm-btn" id="confirm-btn" onclick="confirmAppointment()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      تأكيد الموعد وإرسال للمريض
+    </button>
+    <button class="cancel-btn" onclick="cancelAppointment()">إلغاء الموعد</button>
+  </div>
+
+  <!-- SUCCESS STATE -->
+  <div id="success-state">
+    <div class="big-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <h2>تم التأكيد! ✅</h2>
+    <p>اضغط الزر أدناه لفتح واتساب وإرسال رسالة التأكيد للمريض مباشرة.</p>
+    <a id="whatsapp-link" class="whatsapp-btn" href="#" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      إرسال تأكيد للمريض على واتساب
+    </a>
+  </div>
+
+  <!-- ALREADY DONE -->
+  <div id="already-done">
+    <div class="status-icon green" id="done-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h3 id="done-title">هذا الموعد مؤكد مسبقاً</h3>
+    <p id="done-text">تم تأكيد هذا الموعد من قبل.</p>
+  </div>
+
+  <!-- NOT FOUND -->
+  <div id="not-found">
+    <h3>⚠️ الموعد غير موجود</h3>
+    <p>الرابط غير صحيح أو انتهت صلاحيته.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── CONFIG ──
+const SUPABASE_URL      = 'https://ffdqbzkgraoszmpriaeh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZHFiemtncmFvc3ptcHJpYWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMjc1MjMsImV4cCI6MjA5NDkwMzUyM30.lAgA-K0-l6rH1zdY1MMExwaIkQYuG4NaEFfDHrCl-iQ';
+// ────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Get appointment ID from URL
+const params = new URLSearchParams(window.location.search);
+const apptId = params.get('id');
+let apptData = null;
+
+function show(id){ ['loading','patient-info','success-state','already-done','not-found'].forEach(s=>{ document.getElementById(s).style.display = s===id ? 'block' : 'none'; }); }
+
+async function init(){
+  if(!apptId){ show('not-found'); return; }
+  const { data, error } = await sb.from('appointments').select('*').eq('id', apptId).single();
+  if(error || !data){ show('not-found'); return; }
+  apptData = data;
+
+  if(data.status === 'confirmed' || data.status === 'entered' || data.status === 'done'){
+    const titles = {confirmed:'هذا الموعد مؤكد مسبقاً ✅', entered:'المريض دخل العيادة 🏥', done:'اكتملت الجلسة ✅'};
+    document.getElementById('done-title').textContent = titles[data.status] || 'تم التأكيد';
+    document.getElementById('done-text').textContent = `${data.patient_name} — ${data.preferred_date}`;
+    show('already-done');
+    return;
+  }
+
+  if(data.status === 'cancelled'){
+    document.getElementById('done-icon').className = 'status-icon red';
+    document.getElementById('done-icon').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    document.getElementById('done-title').textContent = 'هذا الموعد ملغي';
+    document.getElementById('done-text').textContent = `تم إلغاء موعد ${data.patient_name}`;
+    show('already-done');
+    return;
+  }
+
+  // Show patient info
+  const dateFormatted = new Date(data.preferred_date).toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('p-name').textContent     = data.patient_name;
+  document.getElementById('p-phone').textContent    = data.patient_phone;
+  document.getElementById('p-date').textContent     = dateFormatted;
+  document.getElementById('p-time').textContent     = data.preferred_time || 'غير محدد';
+  document.getElementById('p-complaint').textContent = data.complaint;
+  show('patient-info');
+}
+
+async function confirmAppointment(){
+  const btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'جاري التأكيد...';
+
+  const { error } = await sb.from('appointments').update({
+    status: 'confirmed',
+    confirmed_at: new Date().toISOString()
+  }).eq('id', apptId);
+
+  if(error){ btn.disabled=false; btn.textContent='تأكيد الموعد'; alert('حدث خطأ، حاول مجدداً'); return; }
+
+  // Build WhatsApp message for patient
+  const dateFormatted = new Date(apptData.preferred_date).toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const msg =
+    `مرحباً ${apptData.patient_name} 😊\n\n` +
+    `تم تأكيد موعدك في عيادة *د. ياسر يحيى* ✅\n\n` +
+    `📅 التاريخ: ${dateFormatted}\n` +
+    (apptData.preferred_time ? `⏰ الوقت: ${apptData.preferred_time}\n` : '') +
+    `📍 العنوان: أبراج قطن — فيكتور إيمانويل — سموحة، الإسكندرية\n` +
+    `📞 للاستفسار: 01224611011\n\n` +
+    `نتمنى لك الشفاء العاجل 🌿`;
+
+  let phone = apptData.patient_phone.replace(/^0/, '20').replace(/\s|\+|-/g,'');
+  const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+  document.getElementById('whatsapp-link').href = waUrl;
+
+  show('success-state');
+}
+
+async function cancelAppointment(){
+  if(!confirm('هل أنت متأكد من إلغاء هذا الموعد؟')) return;
+  await sb.from('appointments').update({status:'cancelled'}).eq('id', apptId);
+  document.getElementById('done-icon').className = 'status-icon red';
+  document.getElementById('done-icon').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  document.getElementById('done-title').textContent = 'تم إلغاء الموعد';
+  document.getElementById('done-text').textContent  = `تم إلغاء موعد ${apptData.patient_name}`;
+  show('already-done');
+}
+
+init();
+</script>
+</body>
+</html>

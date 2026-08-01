@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>احجز موعدك — د. ياسر يحيى</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0a2342;--blue:#1565c0;--blue-mid:#1976d2;
+  --blue-light:#e3f0ff;--red:#c62828;--white:#fff;
+  --off:#f8fafc;--gray:#64748b;--gray-l:#e2e8f0;--text:#1e293b;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Cairo',sans-serif;background:var(--off);color:var(--text);direction:rtl;min-height:100vh;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-thumb{background:var(--blue-mid);border-radius:3px;}
+
+/* ── TOP BAR ── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(255,255,255,0.97);
+  backdrop-filter:blur(12px);
+  border-bottom:2px solid var(--red);
+  box-shadow:0 2px 16px rgba(10,35,66,0.07);
+  padding:0 40px;height:64px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.back-btn{
+  display:flex;align-items:center;gap:8px;
+  background:none;border:1.5px solid var(--gray-l);
+  padding:8px 18px;border-radius:8px;
+  font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;
+  color:var(--navy);cursor:pointer;
+  text-decoration:none;
+  transition:all .3s;
+}
+.back-btn:hover{border-color:var(--navy);background:var(--navy);color:#fff;}
+.back-btn svg{width:16px;height:16px;transition:transform .3s;}
+.back-btn:hover svg{transform:translateX(3px);}
+.topbar-logo{
+  display:flex;align-items:center;gap:10px;
+  text-decoration:none;
+}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--navy),var(--blue-mid));border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:18px;height:18px;}
+.logo-text{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--navy);line-height:1;}
+.logo-text span{display:block;font-size:10px;font-family:'Cairo',sans-serif;font-weight:600;color:var(--red);}
+.topbar-right{width:130px;} /* balance the flex */
+
+/* ── HERO MINI ── */
+.hero-mini{
+  background:linear-gradient(135deg,var(--navy) 0%,#0d3060 60%,var(--blue-mid) 100%);
+  padding:52px 40px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero-mini::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;border:1px solid rgba(255,255,255,0.05);top:-200px;right:-100px;}
+.hero-mini::after{content:'';position:absolute;width:350px;height:350px;border-radius:50%;border:1px solid rgba(198,40,40,0.1);bottom:-150px;left:-80px;}
+.hero-mini-inner{position:relative;z-index:2;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(198,40,40,0.18);border:1px solid rgba(198,40,40,0.4);padding:7px 18px;border-radius:30px;margin-bottom:16px;}
+.hero-badge-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+.hero-badge span{font-size:12px;font-weight:600;color:rgba(255,255,255,.85);}
+.hero-mini h1{font-family:'Playfair Display',serif;font-size:clamp(26px,4vw,44px);font-weight:700;color:#fff;margin-bottom:8px;}
+.hero-mini p{font-size:15px;color:rgba(255,255,255,.55);line-height:1.7;}
+
+/* ── MAIN LAYOUT ── */
+.main{
+  max-width:1100px;margin:0 auto;
+  padding:48px 24px 80px;
+  display:grid;
+  grid-template-columns:1fr 420px;
+  gap:32px;
+  align-items:start;
+}
+
+/* ── BOOKING FORM ── */
+.booking-card{
+  background:#fff;border-radius:16px;
+  box-shadow:0 4px 32px rgba(10,35,66,0.08);
+  border:1px solid var(--gray-l);
+  overflow:hidden;
+}
+.booking-card-header{
+  background:linear-gradient(135deg,var(--navy),var(--blue-mid));
+  padding:28px 32px;
+}
+.booking-card-header h2{
+  font-family:'Playfair Display',serif;
+  font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;
+}
+.booking-card-header p{font-size:13px;color:rgba(255,255,255,.6);}
+.booking-body{padding:32px;}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-group{display:flex;flex-direction:column;gap:7px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:13px;font-weight:700;color:var(--navy);}
+.form-label span{color:var(--red);}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:11px 14px;
+  border:1.5px solid var(--gray-l);border-radius:8px;
+  font-family:'Cairo',sans-serif;font-size:14px;color:var(--text);
+  background:#fff;outline:none;transition:border-color .3s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--blue-mid);}
+.form-textarea{resize:vertical;min-height:100px;line-height:1.7;}
+.form-submit{
+  width:100%;padding:15px;
+  background:var(--red);color:#fff;border:none;border-radius:8px;
+  font-family:'Cairo',sans-serif;font-size:16px;font-weight:700;
+  cursor:pointer;transition:all .3s;margin-top:4px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.form-submit:hover{background:#b71c1c;transform:translateY(-1px);box-shadow:0 8px 24px rgba(198,40,40,.3);}
+.form-submit:disabled{background:#ccc;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* Success */
+.success-msg{display:none;text-align:center;padding:48px 32px;}
+.success-icon{width:72px;height:72px;background:#e8f5e9;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;}
+.success-icon svg{width:36px;height:36px;color:#2e7d32;}
+.success-msg h3{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:10px;}
+.success-msg p{font-size:14px;color:var(--gray);line-height:1.7;}
+.success-ref{display:inline-block;margin-top:16px;background:var(--blue-light);border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;color:var(--blue);}
+.book-again-btn{
+  margin-top:20px;padding:12px 28px;
+  background:var(--navy);color:#fff;border:none;border-radius:8px;
+  font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .3s;
+}
+.book-again-btn:hover{background:var(--blue-mid);}
+
+/* ── RIGHT COLUMN ── */
+.right-col{display:flex;flex-direction:column;gap:24px;}
+
+/* Schedule card */
+.schedule-card{
+  background:#fff;border-radius:16px;
+  box-shadow:0 4px 32px rgba(10,35,66,0.07);
+  border:1px solid var(--gray-l);
+  overflow:hidden;
+}
+.schedule-card-header{
+  background:linear-gradient(135deg,var(--red),#e53935);
+  padding:20px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.schedule-card-header h3{font-family:'Cairo',sans-serif;font-size:16px;font-weight:700;color:#fff;}
+.sched-badge{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.3);}
+.schedule-body{padding:8px 0;}
+.day-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;
+  border-bottom:1px solid var(--gray-l);
+  transition:background .2s;
+}
+.day-row:last-child{border-bottom:none;}
+.day-row:hover{background:var(--off);}
+.day-row.today{background:#fff8e1;}
+.day-name{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.day-dot{width:7px;height:7px;border-radius:50%;background:var(--blue-mid);flex-shrink:0;}
+.day-dot.off{background:var(--gray-l);}
+.day-time{font-size:13px;color:var(--gray);}
+.day-off{font-size:13px;color:#ccc;}
+.today-tag{font-size:10px;font-weight:700;background:var(--red);color:#fff;padding:2px 8px;border-radius:10px;}
+
+/* Address card */
+.address-card{
+  background:#fff;border-radius:16px;
+  box-shadow:0 4px 32px rgba(10,35,66,0.07);
+  border:1px solid var(--gray-l);
+  overflow:hidden;
+}
+.address-card-header{
+  background:linear-gradient(135deg,var(--navy),#1a3a6e);
+  padding:20px 24px;
+}
+.address-card-header h3{font-size:16px;font-weight:700;color:#fff;}
+.address-body{padding:0;}
+.addr-row{display:flex;gap:14px;align-items:flex-start;padding:16px 20px;border-bottom:1px solid var(--gray-l);}
+.addr-row:last-child{border-bottom:none;}
+.addr-icon{width:36px;height:36px;background:var(--blue-light);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.addr-icon svg{width:17px;height:17px;color:var(--blue-mid);}
+.addr-label{font-size:11px;color:var(--gray);margin-bottom:3px;}
+.addr-val{font-size:13px;font-weight:700;color:var(--navy);line-height:1.5;}
+.addr-val a{color:var(--blue-mid);text-decoration:none;}
+.addr-val a:hover{text-decoration:underline;}
+
+/* Note box */
+.note-box{
+  background:var(--blue-light);border-radius:12px;
+  padding:16px 18px;
+  border-right:3px solid var(--blue-mid);
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:13px;color:var(--blue);font-weight:600;line-height:1.6;
+}
+.note-box svg{width:16px;height:16px;flex-shrink:0;margin-top:2px;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;z-index:9999;transition:transform .4s;box-shadow:0 8px 24px rgba(0,0,0,.2);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.error{background:var(--red);}
+
+/* Reveal */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.rd1{transition-delay:.1s;}.rd2{transition-delay:.2s;}
+
+@media(max-width:800px){
+  .topbar{padding:0 16px;}
+  .hero-mini{padding:40px 20px;}
+  .main{grid-template-columns:1fr;padding:28px 16px 60px;}
+  .right-col{order:-1;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <a class="back-btn" href="yasser_yehia.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l7 7-7 7"/></svg>
+    الرجوع للصفحة الرئيسية
+  </a>
+  <a class="topbar-logo" href="index.html">
+    <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+    <div class="logo-text">Dr. Yasser Yehia<span>استشاري جراحة الأوعية الدموية</span></div>
+  </a>
+  <div class="topbar-right"></div>
+</div>
+
+<!-- HERO MINI -->
+<div class="hero-mini">
+  <div class="hero-mini-inner">
+    <div class="hero-badge"><div class="hero-badge-dot"></div><span>متاح لحجز المواعيد الآن</span></div>
+    <h1>احجز موعدك</h1>
+    <p>أدخل بياناتك وسيتواصل معك فريق العيادة لتأكيد الموعد في أقرب وقت</p>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- BOOKING FORM -->
+  <div class="booking-card reveal">
+    <div class="booking-card-header">
+      <h2>حجز الموعد</h2>
+      <p>يرجى ملء البيانات التالية بدقة لضمان التواصل معك وتأكيد موعدك</p>
+    </div>
+    <div class="booking-body" id="form-body">
+      <form id="booking-form" onsubmit="submitBooking(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">الاسم الكامل <span>*</span></label>
+            <input class="form-input" type="text" id="f-name" placeholder="مثال: أحمد محمد علي" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف <span>*</span></label>
+            <input class="form-input" type="tel" id="f-phone" placeholder="01xxxxxxxxx" required/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">اليوم المفضل <span>*</span></label>
+            <input class="form-input" type="date" id="f-date" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">الوقت المفضل</label>
+           <select class="form-select" id="f-time" required>
+                <option value="">اختر الوقت</option>
+                <option value="٤:٠٠ م">٤:٠٠ م</option>
+                <option value="٤:٣٠ م">٤:٣٠ م</option>
+                <option value="٥:٠٠ م">٥:٠٠ م</option>
+                <option value="٥:٣٠ م">٥:٣٠ م</option>
+                <option value="٦:٠٠ م">٦:٠٠ م</option>
+                <option value="٦:٣٠ م">٦:٣٠ م</option>
+                <option value="٧:٠٠ م">٧:٠٠ م</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group full">
+            <label class="form-label">الشكوى الطبية <span>*</span></label>
+            <textarea class="form-textarea" id="f-complaint" placeholder="اكتب شكواك الطبية بالتفصيل..." required></textarea>
+          </div>
+        </div>
+        <button class="form-submit" type="submit" id="submit-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          إرسال طلب الحجز
+        </button>
+      </form>
+    </div>
+    <div class="success-msg" id="success-msg">
+      <div class="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h3>تم استلام طلبك بنجاح! 🎉</h3>
+      <p>سيتواصل معك فريق العيادة على رقم هاتفك لتأكيد الموعد في أقرب وقت.</p>
+      <div class="success-ref" id="ref-num"></div>
+      <button class="book-again-btn" onclick="resetForm()">حجز موعد آخر</button>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <!-- SCHEDULE -->
+    <div class="schedule-card reveal rd1">
+      <div class="schedule-card-header">
+        <h3>🗓 مواعيد العيادة</h3>
+        <span class="sched-badge">سموحة — الإسكندرية</span>
+      </div>
+      <div class="schedule-body" id="schedule-body">
+        <!-- Days filled by JS to highlight today -->
+      </div>
+    </div>
+
+    <!-- ADDRESS -->
+    <div class="address-card reveal rd2">
+      <div class="address-card-header">
+        <h3>📍 معلومات العيادة</h3>
+      </div>
+      <div class="address-body">
+        <div class="addr-row">
+          <div class="addr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div>
+            <div class="addr-label">العنوان</div>
+            <div class="addr-val">أبراج قطن — فيكتور إيمانويل<br>سموحة، الإسكندرية</div>
+          </div>
+        </div>
+        <div class="addr-row">
+          <div class="addr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.07 13.4a19.79 19.79 0 01-3.07-8.67A2 2 0 012.18 2.5h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.66"/></svg></div>
+          <div>
+            <div class="addr-label">هاتف العيادة</div>
+            <div class="addr-val"><a href="tel:01224611011">01224611011</a></div>
+          </div>
+        </div>
+        <div class="addr-row">
+          <div class="addr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+          <div>
+            <div class="addr-label">واتساب</div>
+            <div class="addr-val"><a href="https://wa.me/201224611011" target="_blank">تواصل عبر واتساب</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+<!-- NOTE -->
+    <div class="note-box reveal rd2">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+     سيتم ارسال رسالة على الواتساب لتأكيد موعدك
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── CONFIG ──
+const SUPABASE_URL     = 'https://ffdqbzkgraoszmpriaeh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZHFiemtncmFvc3ptcHJpYWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMjc1MjMsImV4cCI6MjA5NDkwMzUyM30.lAgA-K0-l6rH1zdY1MMExwaIkQYuG4NaEFfDHrCl-iQ';
+const ASSISTANT_WHATSAPP = '201277997110';
+const CALLMEBOT_APIKEY   = '3583929'; // ← replace after activating CallMeBot
+const SITE_URL           = 'https://YOUR-SITE.vercel.app'; // ← replace with your Vercel URL
+// ────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── SET MIN DATE ──
+// ── DATE: only next 7 days, no Thursday (4) or Friday (5) ──
+const dateInput = document.getElementById('f-date');
+const today = new Date();
+today.setHours(0,0,0,0);
+
+// Find allowed dates in the next 7 days
+const allowed = [];
+for(let i = 0; i < 14; i++){  // scan 14 days to guarantee 7 valid ones
+  const d = new Date(today);
+  d.setDate(today.getDate() + i);
+  const day = d.getDay(); // 4=Thu, 5=Fri
+  if(day !== 4 && day !== 5) allowed.push(d);
+  if(allowed.length === 7) break;
+}
+
+const minDate = allowed[0];
+const maxDate = allowed[allowed.length - 1];
+dateInput.min = minDate.toISOString().split('T')[0];
+dateInput.max = maxDate.toISOString().split('T')[0];
+
+// Block Thu/Fri if user types a date manually
+dateInput.addEventListener('change', () => {
+  const picked = new Date(dateInput.value);
+  const pickedDay = picked.getUTCDay();
+  if(pickedDay === 4 || pickedDay === 5){
+    dateInput.value = '';
+    showToast('الخميس والجمعة إجازة — اختر يوماً آخر', 'error');
+  }
+});
+// ── BUILD SCHEDULE (highlight today) ──
+const days = [
+  {name:'السبت',   en:6, time:'٤:٠٠ م — ٧:٠٠ م', off:false},
+  {name:'الأحد',   en:0, time:'٤:٠٠ م — ٧:٠٠ م', off:false},
+  {name:'الاثنين', en:1, time:'٤:٠٠ م — ٧:٠٠ م', off:false},
+  {name:'الثلاثاء',en:2, time:'٤:٠٠ م — ٧:٠٠ م', off:false},
+  {name:'الأربعاء',en:3, time:'٤:٠٠ م — ٧:٠٠ م', off:false},
+  {name:'الخميس', en:4, time:'إجازة',              off:true },
+  {name:'الجمعة', en:5, time:'إجازة',              off:true },
+];
+const todayNum = new Date().getDay();
+document.getElementById('schedule-body').innerHTML = days.map(d=>`
+  <div class="day-row ${d.en===todayNum&&!d.off?'today':''}">
+    <div class="day-name">
+      <span class="day-dot ${d.off?'off':''}"></span>
+      ${d.name}
+      ${d.en===todayNum&&!d.off?'<span class="today-tag">اليوم</span>':''}
+    </div>
+    ${d.off
+      ? `<div class="day-off">إجازة</div>`
+      : `<div class="day-time">🕔 ${d.time}</div>`}
+  </div>`).join('');
+
+// ── SCROLL REVEAL ──
+const obs = new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+(type||'');
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function resetForm(){
+  document.getElementById('booking-form').reset();
+  document.getElementById('form-body').style.display='block';
+  document.getElementById('success-msg').style.display='none';
+}
+
+async function submitBooking(e){
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled=true;
+  btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> جاري الإرسال...';
+
+  const data = {
+    patient_name:   document.getElementById('f-name').value.trim(),
+    patient_phone:  document.getElementById('f-phone').value.trim(),
+    complaint:      document.getElementById('f-complaint').value.trim(),
+    preferred_date: document.getElementById('f-date').value,
+    preferred_time: document.getElementById('f-time').value,
+    status: 'pending'
+  };
+
+  try {
+    const { data:res, error } = await sb.from('appointments').insert([data]).select().single();
+    if(error) throw error;
+
+    // ── WhatsApp to assistant via CallMeBot ──
+    const confirmLink = `${SITE_URL}/confirm.html?id=${res.id}`;
+    const msg =
+      `🏥 *حجز جديد — عيادة د. ياسر يحيى*\n\n` +
+      `👤 الاسم: ${data.patient_name}\n` +
+      `📞 الهاتف: ${data.patient_phone}\n` +
+      `📅 الموعد: ${data.preferred_date}${data.preferred_time?' — '+data.preferred_time:''}\n` +
+      `🩺 الشكوى: ${data.complaint}\n\n` +
+      `✅ تأكيد الموعد:\n${confirmLink}`;
+
+    const encoded = encodeURIComponent(msg);
+    fetch(`https://api.callmebot.com/whatsapp.php?phone=${ASSISTANT_WHATSAPP}&text=${encoded}&apikey=${CALLMEBOT_APIKEY}`)
+      .catch(()=>{}); // silent fail — booking already saved
+
+    // ── Show success ──
+    document.getElementById('form-body').style.display='none';
+    document.getElementById('success-msg').style.display='block';
+    document.getElementById('ref-num').textContent='رقم الطلب: '+res.id.slice(0,8).toUpperCase();
+
+  } catch(err){
+    console.error(err);
+    showToast('حدث خطأ، يرجى المحاولة مجدداً','error');
+    btn.disabled=false;
+    btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> إرسال طلب الحجز';
+  }
+}
+</script>
+</body>
+</html>

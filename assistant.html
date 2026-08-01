@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>لوحة المساعد — عيادة د. ياسر يحيى</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0a2342;--blue:#1565c0;--blue-mid:#1976d2;--blue-light:#e3f0ff;
+  --red:#c62828;--white:#fff;--off:#f1f5f9;--gray:#64748b;--gray-l:#e2e8f0;
+  --green:#2e7d32;--green-l:#e8f5e9;--orange:#e65100;--orange-l:#fff3e0;
+  --purple:#6a1b9a;--purple-l:#f3e5f5;
+}
+body{font-family:'Cairo',sans-serif;background:var(--off);color:#1e293b;direction:rtl;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy),var(--blue-mid));display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:400px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3);}
+.login-icon{width:64px;height:64px;background:var(--blue-light);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;}
+.login-icon svg{width:30px;height:30px;color:var(--blue-mid);}
+.login-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--gray);margin-bottom:28px;}
+.login-input{width:100%;padding:13px 16px;border:1.5px solid var(--gray-l);border-radius:8px;font-family:'Cairo',sans-serif;font-size:15px;text-align:center;letter-spacing:.15em;outline:none;margin-bottom:14px;transition:border-color .3s;}
+.login-input:focus{border-color:var(--blue-mid);}
+.login-btn{width:100%;padding:14px;background:var(--blue-mid);color:#fff;border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .3s;}
+.login-btn:hover{background:var(--navy);}
+.login-err{color:var(--red);font-size:13px;margin-top:10px;display:none;}
+
+/* APP */
+#app{display:none;}
+
+/* SIDEBAR */
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:240px;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;z-index:100;}
+.sidebar-logo{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar-logo-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:#fff;line-height:1.1;}
+.sidebar-logo-sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;}
+.sidebar-role{display:inline-block;margin-top:8px;background:rgba(198,40,40,.3);border:1px solid rgba(198,40,40,.4);color:rgba(255,255,255,.8);font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:.05em;}
+.sidebar-nav{flex:1;padding:16px 0;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;color:rgba(255,255,255,.55);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;border-right:3px solid transparent;text-decoration:none;}
+.nav-item:hover,.nav-item.active{color:#fff;background:rgba(255,255,255,.06);border-right-color:var(--red);}
+.nav-item svg{width:18px;height:18px;flex-shrink:0;}
+.nav-badge{margin-right:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;min-width:20px;text-align:center;}
+.sidebar-bottom{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);}
+.logout-btn{width:100%;padding:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .3s;}
+.logout-btn:hover{background:rgba(198,40,40,.2);color:#fff;}
+
+/* MAIN */
+.main{margin-right:240px;flex:1;padding:32px;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.page-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--navy);}
+.page-sub{font-size:13px;color:var(--gray);margin-top:3px;}
+.topbar-actions{display:flex;gap:12px;align-items:center;}
+.btn-sm{padding:9px 20px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .3s;display:flex;align-items:center;gap:6px;}
+.btn-blue{background:var(--blue-mid);color:#fff;}
+.btn-blue:hover{background:var(--navy);}
+.btn-outline-sm{background:#fff;color:var(--navy);border:1.5px solid var(--gray-l);}
+.btn-outline-sm:hover{border-color:var(--blue-mid);color:var(--blue-mid);}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--green);background:var(--green-l);padding:6px 14px;border-radius:20px;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.stat-card{background:#fff;border-radius:12px;padding:20px 24px;border:1px solid var(--gray-l);display:flex;align-items:center;gap:16px;}
+.stat-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.stat-icon svg{width:22px;height:22px;}
+.stat-num{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--navy);line-height:1;}
+.stat-label{font-size:12px;color:var(--gray);margin-top:2px;}
+
+/* FILTERS */
+.filters-bar{background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;border:1px solid var(--gray-l);}
+.filter-btn{padding:7px 16px;border-radius:20px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--gray-l);background:#fff;color:var(--gray);transition:all .25s;}
+.filter-btn.active,.filter-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+.search-input{padding:8px 14px;border:1.5px solid var(--gray-l);border-radius:20px;font-family:'Cairo',sans-serif;font-size:13px;outline:none;width:200px;transition:border-color .3s;}
+.search-input:focus{border-color:var(--blue-mid);}
+
+/* TABLE */
+.table-card{background:#fff;border-radius:12px;border:1px solid var(--gray-l);overflow:hidden;}
+.table-header{padding:18px 24px;border-bottom:1px solid var(--gray-l);display:flex;align-items:center;justify-content:space-between;}
+.table-title{font-size:15px;font-weight:700;color:var(--navy);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--off);}
+th{padding:12px 16px;text-align:right;font-size:12px;font-weight:700;color:var(--gray);border-bottom:1px solid var(--gray-l);}
+td{padding:14px 16px;font-size:13px;border-bottom:1px solid var(--gray-l);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafbfc;}
+.patient-name{font-weight:700;color:var(--navy);font-size:14px;}
+.patient-phone{font-size:12px;color:var(--gray);margin-top:2px;}
+
+/* STATUS BADGES */
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700;}
+.status-pending{background:#fff8e1;color:#f57f17;}
+.status-confirmed{background:var(--blue-light);color:var(--blue);}
+.status-entered{background:var(--green-l);color:var(--green);}
+.status-done{background:var(--purple-l);color:var(--purple);}
+.status-cancelled{background:#ffebee;color:var(--red);}
+
+/* ACTION BUTTONS */
+.action-btn{padding:6px 14px;border-radius:6px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .25s;white-space:nowrap;}
+.ab-confirm{background:var(--blue-light);color:var(--blue-mid);}
+.ab-confirm:hover{background:var(--blue-mid);color:#fff;}
+.ab-enter{background:var(--green-l);color:var(--green);}
+.ab-enter:hover{background:var(--green);color:#fff;}
+.ab-view{background:var(--off);color:var(--navy);}
+.ab-view:hover{background:var(--gray-l);}
+.ab-cancel{background:#ffebee;color:var(--red);}
+.ab-cancel:hover{background:var(--red);color:#fff;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+.modal-header{padding:24px 28px;border-bottom:1px solid var(--gray-l);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--navy);}
+.modal-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--off);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gray);transition:all .25s;}
+.modal-close:hover{background:var(--gray-l);}
+.modal-body{padding:28px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.info-item{background:var(--off);border-radius:8px;padding:14px 16px;}
+.info-label{font-size:11px;color:var(--gray);margin-bottom:4px;font-weight:600;}
+.info-value{font-size:14px;font-weight:700;color:var(--navy);}
+.complaint-box{background:var(--off);border-radius:8px;padding:16px;margin-bottom:20px;}
+.complaint-box .info-label{margin-bottom:8px;}
+.complaint-text{font-size:14px;line-height:1.8;color:var(--text);}
+.notes-label{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+.notes-textarea{width:100%;padding:12px;border:1.5px solid var(--gray-l);border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;resize:vertical;min-height:80px;outline:none;transition:border-color .3s;margin-bottom:16px;}
+.notes-textarea:focus{border-color:var(--blue-mid);}
+
+/* PRESCRIPTION VIEW */
+.rx-box{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border:1.5px solid #a5d6a7;border-radius:10px;padding:20px;margin-top:16px;}
+.rx-header{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green);margin-bottom:12px;}
+.rx-header svg{width:16px;height:16px;}
+.rx-text{font-size:14px;line-height:1.9;color:var(--text);white-space:pre-wrap;}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:60px 20px;}
+.empty-icon{width:64px;height:64px;background:var(--off);border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;}
+.empty-icon svg{width:28px;height:28px;color:var(--gray-l);}
+.empty-text{font-size:15px;color:var(--gray);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;z-index:9999;transition:transform .4s;box-shadow:0 8px 24px rgba(0,0,0,.2);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .main{margin-right:0;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .info-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div class="login-title">لوحة المساعد</div>
+    <div class="login-sub">عيادة د. ياسر يحيى</div>
+    <input class="login-input" type="password" id="pw-input" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">دخول</button>
+    <div class="login-err" id="login-err">كلمة المرور غلط، حاول مجدداً</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-title">Dr. Yasser Yehia</div>
+        <div class="sidebar-logo-sub">عيادة الأوعية الدموية</div>
+        <span class="sidebar-role">المساعد</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="nav-item active" onclick="showTab('all')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          كل المواعيد
+          <span class="nav-badge" id="badge-all">0</span>
+        </a>
+        <a class="nav-item" onclick="showTab('pending')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          في الانتظار
+          <span class="nav-badge" id="badge-pending">0</span>
+        </a>
+        <a class="nav-item" onclick="showTab('confirmed')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          مؤكدة
+          <span class="nav-badge" id="badge-confirmed">0</span>
+        </a>
+        <a class="nav-item" onclick="showTab('today')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          اليوم
+          <span class="nav-badge" id="badge-today">0</span>
+        </a>
+        <a class="nav-item" onclick="showTab('done')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806"/></svg>
+          مكتملة (وصفات)
+        </a>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <!-- TOPBAR -->
+      <div class="topbar">
+        <div>
+          <div class="page-title">لوحة تحكم المساعد</div>
+          <div class="page-sub" id="today-label">جاري التحميل...</div>
+        </div>
+        <div class="topbar-actions">
+          <div class="live-badge"><div class="live-dot"></div>مباشر</div>
+          <button class="btn-sm btn-blue" onclick="loadAppointments()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            تحديث
+          </button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-icon" style="background:#eff6ff;"><svg viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div><div class="stat-num" id="s-total">0</div><div class="stat-label">إجمالي المواعيد</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#fff8e1;"><svg viewBox="0 0 24 24" fill="none" stroke="#f57f17" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div><div class="stat-num" id="s-pending">0</div><div class="stat-label">في الانتظار</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#e8f5e9;"><svg viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div><div class="stat-num" id="s-today">0</div><div class="stat-label">مواعيد اليوم</div></div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:#f3e5f5;"><svg viewBox="0 0 24 24" fill="none" stroke="#6a1b9a" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div><div class="stat-num" id="s-done">0</div><div class="stat-label">مكتملة</div></div></div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="filters-bar">
+        <button class="filter-btn active" onclick="setFilter('all',this)">الكل</button>
+        <button class="filter-btn" onclick="setFilter('pending',this)">انتظار</button>
+        <button class="filter-btn" onclick="setFilter('confirmed',this)">مؤكد</button>
+        <button class="filter-btn" onclick="setFilter('entered',this)">دخل</button>
+        <button class="filter-btn" onclick="setFilter('done',this)">مكتمل</button>
+        <button class="filter-btn" onclick="setFilter('cancelled',this)">ملغي</button>
+        <input class="search-input" type="text" placeholder="بحث بالاسم أو الهاتف..." id="search-input" oninput="renderTable()"/>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title" id="table-title">كل المواعيد</div>
+          <div style="font-size:12px;color:var(--gray);" id="table-count"></div>
+        </div>
+        <div id="table-container">
+          <div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-text">جاري التحميل...</div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- PATIENT MODAL -->
+<div class="modal-overlay" id="patient-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-name">بيانات المريض</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── CONFIG ──
+const SUPABASE_URL = 'https://ffdqbzkgraoszmpriaeh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZHFiemtncmFvc3ptcHJpYWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMjc1MjMsImV4cCI6MjA5NDkwMzUyM30.lAgA-K0-l6rH1zdY1MMExwaIkQYuG4NaEFfDHrCl-iQ';
+const ASSISTANT_PASSWORD = 'assistant2025'; // Change this!
+// ────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let allAppointments = [];
+let currentFilter = 'all';
+let currentTab = 'all';
+
+// ── AUTH ──
+function doLogin(){
+  const pw = document.getElementById('pw-input').value;
+  if(pw === ASSISTANT_PASSWORD){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    initApp();
+  } else {
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('pw-input').value='';
+  }
+}
+function logout(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('pw-input').value='';
+}
+
+// ── INIT ──
+function initApp(){
+  const now = new Date();
+  document.getElementById('today-label').textContent =
+    now.toLocaleDateString('ar-EG', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  loadAppointments();
+
+  // Realtime subscription
+  sb.channel('appointments').on('postgres_changes',{event:'*',schema:'public',table:'appointments'},()=>{
+    loadAppointments();
+  }).subscribe();
+}
+
+async function loadAppointments(){
+  const { data, error } = await sb.from('appointments').select('*').order('created_at',{ascending:false});
+  if(error){ showToast('خطأ في التحميل','error'); return; }
+  allAppointments = data || [];
+  updateStats();
+  updateBadges();
+  renderTable();
+}
+
+function updateStats(){
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('s-total').textContent = allAppointments.length;
+  document.getElementById('s-pending').textContent = allAppointments.filter(a=>a.status==='pending').length;
+  document.getElementById('s-today').textContent = allAppointments.filter(a=>a.preferred_date===today).length;
+  document.getElementById('s-done').textContent = allAppointments.filter(a=>a.status==='done').length;
+}
+
+function updateBadges(){
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('badge-all').textContent = allAppointments.length;
+  document.getElementById('badge-pending').textContent = allAppointments.filter(a=>a.status==='pending').length;
+  document.getElementById('badge-confirmed').textContent = allAppointments.filter(a=>a.status==='confirmed').length;
+  document.getElementById('badge-today').textContent = allAppointments.filter(a=>a.preferred_date===today).length;
+}
+
+function setFilter(f, btn){
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function showTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const today = new Date().toISOString().split('T')[0];
+  if(tab==='today') currentFilter='all';
+  renderTable();
+}
+
+function renderTable(){
+  const search = (document.getElementById('search-input').value||'').toLowerCase();
+  const today = new Date().toISOString().split('T')[0];
+
+  let filtered = allAppointments;
+  if(currentTab==='today') filtered = filtered.filter(a=>a.preferred_date===today);
+  else if(currentTab==='pending') filtered = filtered.filter(a=>a.status==='pending');
+  else if(currentTab==='confirmed') filtered = filtered.filter(a=>a.status==='confirmed');
+  else if(currentTab==='done') filtered = filtered.filter(a=>a.status==='done');
+
+  if(currentFilter!=='all') filtered = filtered.filter(a=>a.status===currentFilter);
+  if(search) filtered = filtered.filter(a=>
+    a.patient_name.toLowerCase().includes(search) ||
+    a.patient_phone.includes(search)
+  );
+
+  document.getElementById('table-count').textContent = filtered.length + ' نتيجة';
+
+  if(!filtered.length){
+    document.getElementById('table-container').innerHTML=`
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div class="empty-text">لا توجد مواعيد</div>
+      </div>`;
+    return;
+  }
+
+  const statusMap = {
+    pending:'<span class="status-badge status-pending">⏳ انتظار</span>',
+    confirmed:'<span class="status-badge status-confirmed">✓ مؤكد</span>',
+    entered:'<span class="status-badge status-entered">🏥 دخل</span>',
+    done:'<span class="status-badge status-done">✅ مكتمل</span>',
+    cancelled:'<span class="status-badge status-cancelled">✕ ملغي</span>',
+  };
+
+  const rows = filtered.map(a=>{
+    const date = new Date(a.preferred_date).toLocaleDateString('ar-EG',{weekday:'short',month:'short',day:'numeric'});
+    const actions = buildActions(a);
+    return `<tr>
+      <td><div class="patient-name">${a.patient_name}</div><div class="patient-phone">${a.patient_phone}</div></td>
+      <td>${date}${a.preferred_time?'<br><small style="color:var(--gray)">'+a.preferred_time+'</small>':''}</td>
+      <td style="max-width:200px;font-size:13px;color:var(--gray);">${a.complaint.slice(0,60)}${a.complaint.length>60?'...':''}</td>
+      <td>${statusMap[a.status]||a.status}</td>
+      <td style="white-space:nowrap;">${actions}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-container').innerHTML=`
+    <table>
+      <thead><tr>
+        <th>المريض</th><th>الموعد</th><th>الشكوى</th><th>الحالة</th><th>إجراءات</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function buildActions(a){
+  const btns = [`<button class="action-btn ab-view" onclick="openModal('${a.id}')">عرض</button>`];
+  if(a.status==='pending') btns.push(`<button class="action-btn ab-confirm" onclick="updateStatus('${a.id}','confirmed')">تأكيد</button>`);
+  if(a.status==='confirmed') btns.push(`<button class="action-btn ab-enter" onclick="markEntered('${a.id}')">دخل عيادة ▸</button>`);
+  if(a.status!=='cancelled'&&a.status!=='done') btns.push(`<button class="action-btn ab-cancel" onclick="updateStatus('${a.id}','cancelled')">إلغاء</button>`);
+  return btns.join(' ');
+}
+
+async function updateStatus(id, status){
+  const upd = {status};
+  if(status==='confirmed') upd.confirmed_at = new Date().toISOString();
+  if(status==='entered')   upd.entered_at   = new Date().toISOString();
+  if(status==='done')      upd.done_at      = new Date().toISOString();
+
+  const { error } = await sb.from('appointments').update(upd).eq('id',id);
+  if(error){ showToast('خطأ في التحديث','error'); return; }
+  showToast('تم التحديث بنجاح ✓','success');
+  loadAppointments();
+}
+
+async function markEntered(id){
+  const appt = allAppointments.find(a=>a.id===id);
+  if(!appt) return;
+  await updateStatus(id,'entered');
+  // Show patient details in modal automatically (for dr to see)
+  openModal(id, true);
+}
+
+function openModal(id, autoSend=false){
+  const a = allAppointments.find(ap=>ap.id===id);
+  if(!a) return;
+  document.getElementById('modal-name').textContent = a.patient_name;
+
+  const date = new Date(a.preferred_date).toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  let rxSection = '';
+  if(a.prescription){
+    rxSection = `<div class="rx-box">
+      <div class="rx-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>الوصفة الطبية من الدكتور</div>
+      <div class="rx-text">${a.prescription}</div>
+    </div>`;
+  }
+
+  let notesSection = '';
+  if(a.status !== 'done' && a.status !== 'cancelled'){
+    notesSection = `
+      <div class="notes-label">ملاحظات المساعد (اختياري)</div>
+      <textarea class="notes-textarea" id="modal-notes" placeholder="أضف ملاحظات...">${a.assistant_notes||''}</textarea>
+      <button class="action-btn ab-confirm" style="width:100%;padding:10px;font-size:13px;" onclick="saveNotes('${a.id}')">حفظ الملاحظات</button>`;
+  }
+
+  document.getElementById('modal-body').innerHTML=`
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">الاسم</div><div class="info-value">${a.patient_name}</div></div>
+      <div class="info-item"><div class="info-label">الهاتف</div><div class="info-value">${a.patient_phone}</div></div>
+      <div class="info-item"><div class="info-label">الموعد</div><div class="info-value">${date}</div></div>
+      <div class="info-item"><div class="info-label">الوقت</div><div class="info-value">${a.preferred_time||'غير محدد'}</div></div>
+    </div>
+    <div class="complaint-box">
+      <div class="info-label">الشكوى الطبية</div>
+      <div class="complaint-text">${a.complaint}</div>
+    </div>
+    ${notesSection}
+    ${rxSection}
+  `;
+  document.getElementById('patient-modal').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('patient-modal').classList.remove('open');
+}
+
+async function saveNotes(id){
+  const notes = document.getElementById('modal-notes').value;
+  const { error } = await sb.from('appointments').update({assistant_notes:notes}).eq('id',id);
+  if(error){ showToast('خطأ','error'); return; }
+  showToast('تم حفظ الملاحظات ✓','success');
+  loadAppointments();
+}
+
+function showToast(msg, type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||'');
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Close modal on overlay click
+document.getElementById('patient-modal').addEventListener('click',function(e){
+  if(e.target===this) closeModal();
+});
+</script>
+</body>
+</html>

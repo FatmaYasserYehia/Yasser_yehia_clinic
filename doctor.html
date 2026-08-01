@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>لوحة الدكتور — د. ياسر يحيى</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0a2342;--blue:#1565c0;--blue-mid:#1976d2;--blue-light:#e3f0ff;
+  --red:#c62828;--white:#fff;--off:#f1f5f9;--gray:#64748b;--gray-l:#e2e8f0;
+  --green:#2e7d32;--green-l:#e8f5e9;--orange:#e65100;--orange-l:#fff3e0;
+  --purple:#6a1b9a;--purple-l:#f3e5f5;
+}
+body{font-family:'Cairo',sans-serif;background:var(--off);color:#1e293b;direction:rtl;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0d3060,var(--red));display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-card{background:#fff;border-radius:16px;padding:48px 40px;width:100%;max-width:400px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3);}
+.login-icon{width:64px;height:64px;background:#ffebee;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;}
+.login-icon svg{width:30px;height:30px;color:var(--red);}
+.login-role{display:inline-block;margin-bottom:16px;background:#ffebee;color:var(--red);font-size:11px;font-weight:700;padding:4px 14px;border-radius:12px;}
+.login-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--gray);margin-bottom:28px;}
+.login-input{width:100%;padding:13px 16px;border:1.5px solid var(--gray-l);border-radius:8px;font-family:'Cairo',sans-serif;font-size:15px;text-align:center;letter-spacing:.15em;outline:none;margin-bottom:14px;transition:border-color .3s;}
+.login-input:focus{border-color:var(--red);}
+.login-btn{width:100%;padding:14px;background:var(--red);color:#fff;border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .3s;}
+.login-btn:hover{background:#b71c1c;}
+.login-err{color:var(--red);font-size:13px;margin-top:10px;display:none;}
+
+/* APP */
+#app{display:none;}
+
+/* LAYOUT */
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:260px;background:linear-gradient(180deg,#0d1f3c 0%,var(--navy) 100%);display:flex;flex-direction:column;position:fixed;top:0;right:0;bottom:0;z-index:100;}
+.sidebar-logo{padding:28px 24px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sidebar-greeting{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;}
+.sidebar-logo-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff;line-height:1.1;}
+.sidebar-logo-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;}
+.dr-badge{display:inline-block;margin-top:10px;background:rgba(198,40,40,.25);border:1px solid rgba(198,40,40,.5);color:rgba(255,255,255,.9);font-size:10px;font-weight:700;padding:4px 12px;border-radius:12px;}
+.sidebar-nav{flex:1;padding:20px 0;}
+.nav-section{padding:8px 24px 6px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.25);font-weight:700;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:13px 24px;color:rgba(255,255,255,.5);font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;border-right:3px solid transparent;}
+.nav-item:hover,.nav-item.active{color:#fff;background:rgba(255,255,255,.05);border-right-color:var(--red);}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;}
+.nav-badge{margin-right:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;animation:pulse-badge 2s ease-in-out infinite;}
+@keyframes pulse-badge{0%,100%{opacity:1;}50%{opacity:.6;}}
+.sidebar-bottom{padding:20px 24px;border-top:1px solid rgba(255,255,255,.06);}
+.logout-btn{width:100%;padding:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .3s;}
+.logout-btn:hover{background:rgba(198,40,40,.2);color:#fff;}
+
+/* MAIN */
+.main{margin-right:260px;flex:1;padding:36px;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--navy);}
+.page-sub{font-size:13px;color:var(--gray);margin-top:4px;}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--green);background:var(--green-l);padding:7px 16px;border-radius:20px;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+/* NOTIFICATION BANNER */
+.notif-banner{background:linear-gradient(to right,var(--red),#e53935);border-radius:12px;padding:16px 24px;color:#fff;display:flex;align-items:center;gap:16px;margin-bottom:24px;animation:slideIn .5s ease;display:none;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+.notif-icon{width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.notif-text{flex:1;}
+.notif-title{font-size:14px;font-weight:700;}
+.notif-sub{font-size:12px;opacity:.8;margin-top:2px;}
+.notif-btn{background:#fff;color:var(--red);border:none;padding:8px 18px;border-radius:6px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;white-space:nowrap;}
+.notif-btn:hover{background:#ffebee;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.stat-card{background:#fff;border-radius:12px;padding:22px 24px;border:1px solid var(--gray-l);}
+.stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.stat-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.stat-icon svg{width:20px;height:20px;}
+.stat-change{font-size:11px;font-weight:600;}
+.stat-num{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--navy);}
+.stat-label{font-size:12px;color:var(--gray);margin-top:2px;}
+
+/* QUEUE / PATIENT CARDS */
+.queue-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.queue-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--navy);}
+
+.patient-queue{display:flex;flex-direction:column;gap:16px;}
+
+.patient-card{background:#fff;border-radius:12px;border:1.5px solid var(--gray-l);overflow:hidden;transition:all .35s;}
+.patient-card.entered{border-color:var(--red);box-shadow:0 4px 20px rgba(198,40,40,.1);}
+.patient-card.done{border-color:#a5d6a7;opacity:.7;}
+
+.pcard-header{display:flex;align-items:center;gap:16px;padding:20px 24px;cursor:pointer;user-select:none;}
+.pcard-header:hover{background:#fafbfc;}
+.pcard-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue-mid));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;flex-shrink:0;}
+.pcard-info{flex:1;}
+.pcard-name{font-size:16px;font-weight:700;color:var(--navy);}
+.pcard-meta{font-size:12px;color:var(--gray);margin-top:3px;}
+.pcard-status{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.pcard-time{font-size:11px;color:var(--gray);}
+
+/* Status badge */
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700;}
+.sb-entered{background:#ffebee;color:var(--red);}
+.sb-done{background:var(--green-l);color:var(--green);}
+.sb-confirmed{background:var(--blue-light);color:var(--blue);}
+
+/* PATIENT DETAIL (expandable) */
+.pcard-detail{display:none;border-top:1px solid var(--gray-l);padding:24px;}
+.pcard-detail.open{display:block;}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}
+.detail-item{background:var(--off);border-radius:8px;padding:12px 16px;}
+.detail-label{font-size:11px;color:var(--gray);margin-bottom:3px;font-weight:600;}
+.detail-value{font-size:14px;font-weight:700;color:var(--navy);}
+
+.complaint-section{background:#fff8f8;border:1.5px solid #ffcdd2;border-radius:10px;padding:18px;margin-bottom:20px;}
+.complaint-section .detail-label{color:var(--red);margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:6px;}
+.complaint-section .detail-label svg{width:13px;height:13px;}
+.complaint-text{font-size:14px;line-height:1.9;color:var(--text);}
+
+.notes-section{background:var(--blue-light);border:1.5px solid #90caf9;border-radius:10px;padding:16px;margin-bottom:20px;display:none;}
+.notes-label{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.notes-text{font-size:13px;line-height:1.8;color:var(--text);}
+
+/* RX COMPOSER */
+.rx-composer{background:linear-gradient(135deg,#f8fff9,#f0fff4);border:2px solid #a5d6a7;border-radius:12px;padding:24px;}
+.rx-composer-title{font-size:15px;font-weight:700;color:var(--green);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.rx-composer-title-left{display:flex;align-items:center;gap:8px;}
+.rx-composer-title svg{width:18px;height:18px;}
+.rx-manage-btn{background:#fff;border:1.5px solid #a5d6a7;color:var(--green);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;padding:5px 12px;border-radius:14px;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:5px;}
+.rx-manage-btn:hover{background:var(--green);color:#fff;}
+.rx-templates{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.rx-template-wrap{position:relative;display:inline-flex;}
+.rx-template{background:#fff;border:1.5px solid #a5d6a7;border-radius:20px;padding:5px 14px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:600;color:var(--green);cursor:pointer;transition:all .25s;}
+.rx-template:hover{background:var(--green);color:#fff;border-color:var(--green);}
+.rx-template-del{position:absolute;top:-6px;left:-6px;width:18px;height:18px;background:var(--red);color:#fff;border-radius:50%;font-size:11px;line-height:18px;text-align:center;cursor:pointer;display:none;font-weight:700;}
+.rx-templates.manage-mode .rx-template-del{display:block;}
+.rx-templates.manage-mode .rx-template{border-style:dashed;}
+.rx-add-med{display:none;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.rx-add-med.open{display:flex;}
+.rx-add-med input{flex:1;min-width:140px;padding:9px 12px;border:1.5px solid var(--gray-l);border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;outline:none;}
+.rx-add-med input:focus{border-color:var(--green);}
+.rx-add-med button{padding:9px 16px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.rx-textarea{width:100%;padding:14px 16px;border:1.5px solid #a5d6a7;border-radius:8px;font-family:'Cairo',sans-serif;font-size:14px;line-height:1.8;resize:vertical;min-height:130px;outline:none;transition:border-color .3s;background:#fff;margin-bottom:14px;}
+.rx-textarea:focus{border-color:var(--green);}
+.rx-actions{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-send-rx{padding:12px 28px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .3s;display:flex;align-items:center;gap:8px;}
+.btn-send-rx:hover{background:#1b5e20;transform:translateY(-1px);}
+.btn-send-rx:disabled{background:#ccc;cursor:not-allowed;transform:none;}
+.btn-done{padding:12px 20px;background:var(--purple-l);color:var(--purple);border:none;border-radius:8px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .3s;}
+.btn-done:hover{background:var(--purple);color:#fff;}
+
+/* Sent RX view */
+.rx-sent{background:var(--green-l);border:1.5px solid #a5d6a7;border-radius:10px;padding:18px;}
+.rx-sent-header{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green);margin-bottom:12px;}
+.rx-sent-text{font-size:14px;line-height:1.9;color:var(--text);white-space:pre-wrap;}
+.rx-sent-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.rx-edit-btn{padding:8px 18px;background:#fff;color:var(--green);border:1.5px solid #a5d6a7;border-radius:6px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;}
+.rx-edit-btn:hover{background:var(--green);color:#fff;}
+.rx-print-btn{padding:8px 18px;background:var(--navy);color:#fff;border:1.5px solid var(--navy);border-radius:6px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:6px;}
+.rx-print-btn:hover{background:#132f57;}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:80px 20px;}
+.empty-icon{width:80px;height:80px;background:var(--off);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;}
+.empty-icon svg{width:36px;height:36px;color:var(--gray-l);}
+.empty-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+.empty-sub{font-size:14px;color:var(--gray);}
+
+/* TABS */
+.tabs{display:flex;gap:0;margin-bottom:20px;background:#fff;border-radius:10px;padding:4px;border:1px solid var(--gray-l);}
+.tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;color:var(--gray);cursor:pointer;border-radius:8px;transition:all .25s;}
+.tab.active{background:var(--navy);color:#fff;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:13px 26px;border-radius:8px;font-size:14px;font-weight:600;z-index:9999;transition:transform .4s;box-shadow:0 8px 24px rgba(0,0,0,.25);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+
+@media(max-width:1000px){.stats-row{grid-template-columns:1fr 1fr;}.detail-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:768px){.sidebar{display:none;}.main{margin-right:0;padding:20px;}}
+
+/* ============ PRESCRIPTION PRINT SHEET (matches Dr. Yasser Yehia's paper pad) ============ */
+#rx-print-overlay{
+  display:none;position:fixed;inset:0;background:rgba(10,20,40,.65);z-index:10000;
+  overflow:auto;padding:80px 16px 32px;
+}
+#rx-print-overlay.open{display:block;}
+.rx-print-toolbar{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:12px;z-index:10001;
+  background:#fff;padding:10px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.35);
+}
+.rx-print-toolbar button{
+  padding:11px 24px;border-radius:8px;border:none;font-family:'Cairo',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:8px;
+}
+.rx-print-toolbar .btn-do-print{background:var(--green);color:#fff;}
+.rx-print-toolbar .btn-do-print:hover{background:#1b5e20;}
+.rx-print-toolbar .btn-close-preview{background:var(--off);color:var(--navy);}
+.rx-print-toolbar .btn-close-preview:hover{background:var(--gray-l);}
+.rx-sheet{
+  width:210mm;min-height:297mm;margin:0 auto;background:#fff;
+  padding:14mm 14mm 10mm;font-family:'Cairo',sans-serif;color:#111;direction:rtl;
+  position:relative;box-shadow:0 10px 50px rgba(0,0,0,.4);
+}
+.rx-sheet-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--navy);padding-bottom:14px;margin-bottom:22px;}
+.rx-sheet-doctor-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--navy);}
+.rx-sheet-titles{margin-top:8px;font-size:11.5px;line-height:2;color:#333;font-weight:600;}
+.rx-sheet-logo{width:64px;height:64px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:26px;font-weight:700;flex-shrink:0;}
+.rx-sheet-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;}
+.rx-sheet-meta-item{display:flex;align-items:center;gap:6px;}
+.rx-sheet-meta-label{font-weight:700;color:var(--navy);}
+.rx-sheet-meta-value{border-bottom:1px solid #999;padding:0 6px 2px;min-width:120px;display:inline-block;}
+.rx-sheet-consult-day{font-size:12px;color:#555;margin-bottom:18px;}
+.rx-sheet-body{display:flex;gap:18px;min-height:340px;}
+.rx-symbol{font-family:'Playfair Display',serif;font-size:46px;font-weight:700;color:var(--navy);line-height:1;flex-shrink:0;}
+.rx-sheet-lines{flex:1;font-size:15px;line-height:2.6;white-space:pre-wrap;background-image:repeating-linear-gradient(transparent,transparent 38px,#ddd 39px);padding-top:4px;}
+.rx-sheet-footer{position:absolute;bottom:10mm;left:14mm;right:14mm;border-top:1.5px solid var(--navy);padding-top:10px;text-align:center;font-size:11px;color:#333;line-height:1.9;}
+@media print{
+  body *{visibility:hidden;}
+  #rx-print-overlay, #rx-print-overlay *{visibility:visible;}
+  #rx-print-overlay{display:block;position:fixed;top:0;left:0;right:0;background:#fff;padding:0;}
+  .rx-print-toolbar{display:none;}
+  .rx-sheet{box-shadow:none;margin:0;width:100%;min-height:100vh;padding:10mm 14mm;}
+  @page{size:A4;margin:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+    <span class="login-role">بوابة الدكتور</span>
+    <div class="login-title">Dr. Yasser Yehia</div>
+    <div class="login-sub">استشاري جراحة الأوعية الدموية</div>
+    <input class="login-input" type="password" id="pw-input" placeholder="كلمة مرور الدكتور" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">دخول</button>
+    <div class="login-err" id="login-err">كلمة المرور غلط</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-greeting">مرحباً يا دكتور</div>
+      <div class="sidebar-logo-title">Dr. Yasser Yehia</div>
+      <div class="sidebar-logo-sub">استشاري الأوعية الدموية</div>
+      <span class="dr-badge">🩺 الدكتور</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">المرضى</div>
+      <div class="nav-item active" onclick="setDrTab('waiting')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        المرضى بالعيادة
+        <span class="nav-badge" id="badge-entered">0</span>
+      </div>
+      <div class="nav-item" onclick="setDrTab('today')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+        مواعيد اليوم
+        <span class="nav-badge" id="badge-dr-today">0</span>
+      </div>
+      <div class="nav-item" onclick="setDrTab('done')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0"/></svg>
+        انتهت الجلسات
+      </div>
+      <div class="nav-section">عام</div>
+      <div class="nav-item" onclick="setDrTab('all')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        كل المرضى
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">لوحة الدكتور</div>
+        <div class="page-sub" id="date-label"></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <div class="live-badge"><div class="live-dot"></div>مباشر</div>
+        <button style="padding:9px 20px;border-radius:8px;border:1.5px solid var(--gray-l);background:#fff;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;" onclick="loadData()">
+          تحديث ↻
+        </button>
+      </div>
+    </div>
+
+    <!-- NEW PATIENT NOTIFICATION -->
+    <div class="notif-banner" id="notif-banner">
+      <div class="notif-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+      <div class="notif-text">
+        <div class="notif-title" id="notif-title">مريض جديد دخل العيادة</div>
+        <div class="notif-sub" id="notif-sub"></div>
+      </div>
+      <button class="notif-btn" onclick="closeNotif()">عرض ▸</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#ffebee;"><svg viewBox="0 0 24 24" fill="none" stroke="#c62828" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+          <span class="stat-change" style="color:var(--red);">بالعيادة</span>
+        </div>
+        <div class="stat-num" id="ds-entered">0</div>
+        <div class="stat-label">مريض بالعيادة الآن</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#e3f0ff;"><svg viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <span class="stat-change" style="color:var(--blue-mid);">اليوم</span>
+        </div>
+        <div class="stat-num" id="ds-today">0</div>
+        <div class="stat-label">مواعيد اليوم</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#e8f5e9;"><svg viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div>
+          <span class="stat-change" style="color:var(--green);">مكتمل</span>
+        </div>
+        <div class="stat-num" id="ds-done">0</div>
+        <div class="stat-label">جلسات اكتملت اليوم</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#fff3e0;"><svg viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <span class="stat-change" style="color:var(--orange);">ينتظر</span>
+        </div>
+        <div class="stat-num" id="ds-confirmed">0</div>
+        <div class="stat-label">ينتظر الدخول</div>
+      </div>
+    </div>
+
+    <!-- PATIENT LIST -->
+    <div class="queue-header">
+      <div class="queue-title" id="queue-title">المرضى بالعيادة الآن</div>
+    </div>
+    <div id="patient-list"></div>
+  </main>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ============ PRINT PREVIEW OVERLAY — matches Dr. Yasser Yehia's paper prescription pad ============ -->
+<div id="rx-print-overlay">
+  <div class="rx-print-toolbar">
+    <button class="btn-do-print" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      طباعة الآن
+    </button>
+    <button class="btn-close-preview" onclick="closePrintPreview()">إغلاق ✕</button>
+  </div>
+  <div class="rx-sheet">
+    <div class="rx-sheet-header">
+      <div>
+        <div class="rx-sheet-doctor-name">د. ياسر يحيى</div>
+        <div class="rx-sheet-titles">
+          استشاري جراحة الأوعية الدموية والقدم السكري<br/>
+          استشاري توسيع الشرايين بالبالون وتركيب الدعامات<br/>
+          استشاري علاج دوالي الساقين
+        </div>
+      </div>
+      <div class="rx-sheet-logo">ي</div>
+    </div>
+
+    <div class="rx-sheet-meta">
+      <div class="rx-sheet-meta-item"><span class="rx-sheet-meta-label">الاسم:</span><span class="rx-sheet-meta-value" id="print-patient-name"></span></div>
+      <div class="rx-sheet-meta-item"><span class="rx-sheet-meta-label">التاريخ:</span><span class="rx-sheet-meta-value" id="print-date"></span></div>
+    </div>
+    <div class="rx-sheet-consult-day">الإستشارة يوم: <span id="print-consult-day">___________</span></div>
+
+    <div class="rx-sheet-body">
+      <div class="rx-symbol">Rx</div>
+      <div class="rx-sheet-lines" id="print-rx-text"></div>
+    </div>
+
+    <div class="rx-sheet-footer">
+      الإسكندرية: سموحة - ميدان فيكتور عمانويل - أبراج القطن - برج (1) الدور الثاني شقة (204)<br/>
+      تليفون: 034277348 &nbsp;|&nbsp; محمول: 01224611011
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const SUPABASE_URL = 'https://ffdqbzkgraoszmpriaeh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZHFiemtncmFvc3ptcHJpYWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMjc1MjMsImV4cCI6MjA5NDkwMzUyM30.lAgA-K0-l6rH1zdY1MMExwaIkQYuG4NaEFfDHrCl-iQ';
+const DOCTOR_PASSWORD = 'doctor2025'; // Change this!
+// ────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let allData = [];
+let currentDrTab = 'waiting';
+let prevEnteredIds = new Set();
+let expandedCards = new Set();
+let medications = [];       // frequent medication chips, loaded from Supabase
+let manageModeOn = false;   // toggles add/delete controls on the chips
+
+// ── AUTH ──
+function doLogin(){
+  const pw = document.getElementById('pw-input').value;
+  if(pw === DOCTOR_PASSWORD){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    initApp();
+  } else {
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('pw-input').value='';
+  }
+}
+function logout(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
+// ── INIT ──
+function initApp(){
+  const now = new Date();
+  document.getElementById('date-label').textContent =
+    now.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  loadData();
+  loadMedications();
+  // Realtime
+  sb.channel('dr-appointments').on('postgres_changes',{event:'*',schema:'public',table:'appointments'},(payload)=>{
+    if(payload.new?.status==='entered'){
+      const appt = payload.new;
+      if(!prevEnteredIds.has(appt.id)){
+        showNotif(appt);
+        prevEnteredIds.add(appt.id);
+      }
+    }
+    loadData();
+  }).subscribe();
+}
+
+async function loadData(){
+  const { data, error } = await sb.from('appointments').select('*').order('created_at',{ascending:false});
+  if(error){ showToast('خطأ في التحميل','error'); return; }
+  allData = data || [];
+  updateStats();
+  renderList();
+}
+
+function updateStats(){
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('ds-entered').textContent = allData.filter(a=>a.status==='entered').length;
+  document.getElementById('ds-today').textContent = allData.filter(a=>a.preferred_date===today).length;
+  document.getElementById('ds-done').textContent = allData.filter(a=>a.status==='done'&&a.preferred_date===today).length;
+  document.getElementById('ds-confirmed').textContent = allData.filter(a=>a.status==='confirmed').length;
+  document.getElementById('badge-entered').textContent = allData.filter(a=>a.status==='entered').length;
+  document.getElementById('badge-dr-today').textContent = allData.filter(a=>a.preferred_date===today).length;
+}
+
+function setDrTab(tab){
+  currentDrTab = tab;
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  const titles = {waiting:'المرضى بالعيادة الآن',today:'مواعيد اليوم',done:'الجلسات المكتملة',all:'كل المرضى'};
+  document.getElementById('queue-title').textContent = titles[tab]||'المرضى';
+  renderList();
+}
+
+function renderList(){
+  const today = new Date().toISOString().split('T')[0];
+  let list = allData;
+  if(currentDrTab==='waiting') list = allData.filter(a=>a.status==='entered');
+  else if(currentDrTab==='today') list = allData.filter(a=>a.preferred_date===today);
+  else if(currentDrTab==='done') list = allData.filter(a=>a.status==='done');
+
+  const container = document.getElementById('patient-list');
+
+  if(!list.length){
+    container.innerHTML=`<div class="empty-state">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div class="empty-title">${currentDrTab==='waiting'?'لا يوجد مرضى حالياً':'لا توجد بيانات'}</div>
+      <div class="empty-sub">${currentDrTab==='waiting'?'سيظهر المريض هنا فور دخوله العيادة':''}</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(a => buildPatientCard(a)).join('');
+}
+
+function buildPatientCard(a){
+  const isExpanded = expandedCards.has(a.id);
+  const date = new Date(a.preferred_date).toLocaleDateString('ar-EG',{weekday:'short',month:'short',day:'numeric'});
+  const initial = a.patient_name.charAt(0);
+  const enteredTime = a.entered_at ? new Date(a.entered_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
+
+  const statusBadge = {
+    entered:'<span class="status-badge sb-entered">🔴 بالعيادة</span>',
+    done:'<span class="status-badge sb-done">✅ اكتمل</span>',
+    confirmed:'<span class="status-badge sb-confirmed">🔵 مؤكد</span>',
+  }[a.status] || '';
+
+  // Notes from assistant
+  const notesSection = a.assistant_notes ?
+    `<div class="notes-section" style="display:block;">
+      <div class="notes-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>ملاحظات المساعد</div>
+      <div class="notes-text">${a.assistant_notes}</div>
+    </div>` : '';
+
+  // RX section
+  let rxSection = '';
+  if(a.status === 'done' && a.prescription){
+    rxSection = `<div class="rx-sent">
+      <div class="rx-sent-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 11l3 3L22 4"/></svg>الوصفة أُرسلت للمساعد</div>
+      <div class="rx-sent-text">${a.prescription}</div>
+      <div class="rx-sent-actions">
+        <button class="rx-print-btn" onclick="printRx('${a.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          طباعة الوصفة
+        </button>
+        <button class="rx-edit-btn" onclick="editRx('${a.id}')">تعديل الوصفة</button>
+      </div>
+    </div>`;
+  } else if(a.status === 'entered' || (a.status === 'done' && !a.prescription)){
+    rxSection = `<div class="rx-composer">
+      <div class="rx-composer-title">
+        <div class="rx-composer-title-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          اكتب الوصفة الطبية
+        </div>
+        <button class="rx-manage-btn" onclick="toggleManageMode()">${manageModeOn?'تم ✓':'✎ إدارة الأدوية'}</button>
+      </div>
+      <div class="rx-templates ${manageModeOn?'manage-mode':''}" id="rx-chip-list-${a.id}">
+        ${renderMedChips(a.id)}
+      </div>
+      <div class="rx-add-med ${manageModeOn?'open':''}" id="rx-add-med-${a.id}">
+        <input type="text" id="med-label-${a.id}" placeholder="اسم مختصر (يظهر على الزر) — مثال: باراسيتامول"/>
+        <input type="text" id="med-snippet-${a.id}" placeholder="النص الكامل اللي هيتضاف للوصفة (اختياري)"/>
+        <button onclick="addMedication('${a.id}')">إضافة +</button>
+      </div>
+      <textarea class="rx-textarea" id="rx-${a.id}" placeholder="اكتب الوصفة الطبية والتعليمات للمريض...">${a._draftText||''}</textarea>
+      <div class="rx-actions">
+        <button class="btn-send-rx" onclick="sendRx('${a.id}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          إرسال الوصفة للمساعد
+        </button>
+        <button class="btn-done" onclick="markDone('${a.id}')">إنهاء الجلسة ✓</button>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="patient-card ${a.status}" id="card-${a.id}">
+    <div class="pcard-header" onclick="toggleCard('${a.id}')">
+      <div class="pcard-avatar">${initial}</div>
+      <div class="pcard-info">
+        <div class="pcard-name">${a.patient_name}</div>
+        <div class="pcard-meta">${a.patient_phone} · ${date}${a.preferred_time?' · '+a.preferred_time:''}</div>
+      </div>
+      <div class="pcard-status">
+        ${statusBadge}
+        ${enteredTime?`<div class="pcard-time">دخل: ${enteredTime}</div>`:''}
+      </div>
+    </div>
+    <div class="pcard-detail ${isExpanded?'open':''}" id="detail-${a.id}">
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">الاسم الكامل</div><div class="detail-value">${a.patient_name}</div></div>
+        <div class="detail-item"><div class="detail-label">رقم الهاتف</div><div class="detail-value">${a.patient_phone}</div></div>
+        <div class="detail-item"><div class="detail-label">الموعد المحجوز</div><div class="detail-value">${date}</div></div>
+      </div>
+      <div class="complaint-section">
+        <div class="detail-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>الشكوى الطبية</div>
+        <div class="complaint-text">${a.complaint}</div>
+      </div>
+      ${notesSection}
+      ${rxSection}
+    </div>
+  </div>`;
+}
+
+function toggleCard(id){
+  if(expandedCards.has(id)) expandedCards.delete(id);
+  else expandedCards.add(id);
+  const detail = document.getElementById('detail-'+id);
+  if(detail) detail.classList.toggle('open');
+}
+
+/* ============ FREQUENT MEDICATIONS (doctor-managed chips) ============ */
+
+async function loadMedications(){
+  const { data, error } = await sb.from('doctor_medications').select('*').order('sort_order',{ascending:true});
+  if(error){
+    // Table might not exist yet — fail quietly, chips just won't show until it's created.
+    console.warn('doctor_medications not available yet:', error.message);
+    medications = [];
+    return;
+  }
+  medications = data || [];
+  renderList();
+}
+
+function renderMedChips(cardId){
+  if(!medications.length){
+    return manageModeOn
+      ? `<span style="font-size:12px;color:var(--gray);">لسه مفيش أدوية مضافة — استخدم الفورم تحت لإضافة أول دوا</span>`
+      : '';
+  }
+  return medications.map(m => `
+    <div class="rx-template-wrap">
+      <span class="rx-template" onclick="${manageModeOn?'':`addTemplateById('${cardId}','${m.id}')`}">${escapeHtml(m.label)}</span>
+      <span class="rx-template-del" onclick="deleteMedication('${m.id}')" title="حذف">×</span>
+    </div>
+  `).join('');
+}
+
+function toggleManageMode(){
+  manageModeOn = !manageModeOn;
+  renderList();
+}
+
+async function addMedication(cardId){
+  const labelEl = document.getElementById('med-label-'+cardId);
+  const snippetEl = document.getElementById('med-snippet-'+cardId);
+  const label = labelEl.value.trim();
+  // Snippet is optional — if left empty, the label itself is used as the inserted text.
+  const snippet = snippetEl.value.trim() || label;
+  if(!label){ showToast('اكتب اسم الدوا على الأقل','error'); return; }
+
+  const { error } = await sb.from('doctor_medications').insert({
+    label, snippet, sort_order: medications.length
+  });
+  if(error){ showToast('خطأ في الإضافة','error'); console.error(error); return; }
+  showToast('تمت إضافة الدوا ✓','success');
+  labelEl.value=''; snippetEl.value='';
+  await loadMedications();
+}
+
+async function deleteMedication(medId){
+  if(!confirm('تحذف الدوا ده من القائمة؟')) return;
+  const { error } = await sb.from('doctor_medications').delete().eq('id', medId);
+  if(error){ showToast('خطأ في الحذف','error'); return; }
+  showToast('تم الحذف ✓','success');
+  await loadMedications();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============ RX COMPOSER ACTIONS ============ */
+
+function addTemplate(id, text){
+  const ta = document.getElementById('rx-'+id);
+  if(ta) ta.value = (ta.value ? ta.value + '\n' : '') + text;
+}
+
+function addTemplateById(cardId, medId){
+  const med = medications.find(m => String(m.id) === String(medId));
+  if(!med){ showToast('الدوا ده مش موجود','error'); return; }
+  addTemplate(cardId, med.snippet);
+}
+
+async function sendRx(id){
+  const ta = document.getElementById('rx-'+id);
+  if(!ta || !ta.value.trim()){ showToast('اكتب الوصفة أولاً','error'); return; }
+  const btn = ta.parentElement.querySelector('.btn-send-rx');
+  if(btn){ btn.disabled=true; btn.textContent='جاري الإرسال...'; }
+
+  const { error } = await sb.from('appointments').update({
+    prescription: ta.value.trim(),
+    prescription_sent_at: new Date().toISOString(),
+    status: 'done',
+    done_at: new Date().toISOString()
+  }).eq('id',id);
+
+  if(error){ showToast('خطأ في الإرسال','error'); if(btn){btn.disabled=false;btn.textContent='إرسال الوصفة ▸';} return; }
+  showToast('تم إرسال الوصفة للمساعد ✓','success');
+  expandedCards.add(id);
+  loadData();
+}
+
+async function markDone(id){
+  const { error } = await sb.from('appointments').update({status:'done',done_at:new Date().toISOString()}).eq('id',id);
+  if(error){ showToast('خطأ','error'); return; }
+  showToast('تم إنهاء الجلسة ✓','success');
+  loadData();
+}
+
+function editRx(id){
+  // Re-render will show the composer
+  const appt = allData.find(a=>a.id===id);
+  if(appt){ appt._draftText = appt.prescription||''; appt.prescription=null; appt.status='entered'; }
+  expandedCards.add(id);
+  renderList();
+}
+
+/* ============ PRINT PRESCRIPTION (matches paper pad template) ============ */
+
+function printRx(id){
+  const appt = allData.find(a=>a.id===id);
+  if(!appt || !appt.prescription){ showToast('لا توجد وصفة لطباعتها','error'); return; }
+
+  document.getElementById('print-patient-name').textContent = appt.patient_name;
+  document.getElementById('print-date').textContent =
+    new Date(appt.prescription_sent_at || appt.done_at || Date.now()).toLocaleDateString('ar-EG',{year:'numeric',month:'2-digit',day:'2-digit'});
+  document.getElementById('print-consult-day').textContent =
+    appt.preferred_date ? new Date(appt.preferred_date).toLocaleDateString('ar-EG',{weekday:'long'}) : '___________';
+  document.getElementById('print-rx-text').textContent = appt.prescription;
+
+  document.getElementById('rx-print-overlay').classList.add('open');
+}
+
+function closePrintPreview(){
+  document.getElementById('rx-print-overlay').classList.remove('open');
+}
+
+// Notification for new patient entering
+function showNotif(appt){
+  document.getElementById('notif-title').textContent = `🔴 مريض جديد دخل العيادة`;
+  document.getElementById('notif-sub').textContent = appt.patient_name + ' · ' + appt.patient_phone;
+  const banner = document.getElementById('notif-banner');
+  banner.style.display='flex';
+  // Auto scroll to list
+  setTimeout(()=>{ document.getElementById('patient-list').scrollIntoView({behavior:'smooth'}); },500);
+}
+
+function closeNotif(){
+  document.getElementById('notif-banner').style.display='none';
+  setDrTab('waiting');
+}
+
+function showToast(msg, type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type||'');
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>

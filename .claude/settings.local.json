@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"C:\\\\Users\\\\MEGAST~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--projects-me\\\\8e7fb0e3-8397-485a-9e7d-32e4ea6c4b6e\\\\scratchpad\\\\rx\\\\word\\\\media\\\\image1.jpeg\"\\); \"$\\($img.Width\\) x $\\($img.Height\\)\"; $img.Dispose\\(\\))",
+      "Bash(mkdir -p \"d:/projects_me/assets\")",
+      "Bash(cp \"C:/Users/MEGAST~1/AppData/Local/Temp/claude/d--projects-me/8e7fb0e3-8397-485a-9e7d-32e4ea6c4b6e/scratchpad/rx/word/media/image1.jpeg\" \"d:/projects_me/assets/rx-letterhead.jpg\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"console.log\\(require.resolve\\('puppeteer'\\)\\)\")",
+      "Bash(npm ls *)",
+      "Bash(curl -s -X PUT \"http://localhost:9333/json/new?file:///D:/projects_me/doctor.html\")",
+      "Bash(node cdp_test.mjs \"ws://localhost:9333/devtools/page/BDCE13A6FA14DA4D091AFA351233B614\")"
+    ]
+  }
+}
